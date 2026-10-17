@@ -8,7 +8,6 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(!!localStorage.getItem("token"));
 
-  // Whenever the token changes, load the current user
   useEffect(() => {
     if (!token) {
       setUser(null);
@@ -27,7 +26,6 @@ export function AuthProvider({ children }) {
   }, [token]);
 
   async function login(email, password) {
-    // The backend uses the OAuth2 form format, not JSON
     const form = new URLSearchParams({ username: email, password });
     const res = await api.post("/auth/login", form);
     localStorage.setItem("token", res.data.access_token);
