@@ -3,6 +3,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.categories.service import create_default_categories
+
 from app.auth.dependencies import get_current_user
 from app.auth.models import User
 from app.auth.schemas import Token, UserCreate, UserOut
@@ -20,6 +22,8 @@ def register(data: UserCreate, db: Session = Depends(get_db)):
 
     user = User(email=data.email, hashed_password=hash_password(data.password))
     db.add(user)
+    db.flush()  # assigns user.id without committing
+    create_default_categories(db, user.id)
     db.commit()
     db.refresh(user)
     return user

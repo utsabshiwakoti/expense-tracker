@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
 from app.auth.models import User
+from app.categories.service import get_owned_category
 from app.core.database import get_db
 from app.expenses import service
 from app.expenses.models import Expense
@@ -18,12 +19,19 @@ from app.expenses.schemas import (
 router = APIRouter(prefix="/expenses", tags=["expenses"])
 
 
+def _check_category(db: Session, user: User, category_id: int | None) -> None:
+    """Reject a category that doesn't exist or belongs to another user."""
+    if category_id is not None and get_owned_category(db, user.id, category_id) is None:
+        raise HTTPException(status_code=400, detail="Invalid category")
+
+
 @router.post("", response_model=ExpenseOut, status_code=status.HTTP_201_CREATED)
 def create_expense(
     data: ExpenseCreate,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    _check_category(db, user, data.category_id)
     expense = Expense(**data.model_dump(), user_id=user.id)
     db.add(expense)
     db.commit()
@@ -75,6 +83,7 @@ def update_expense(
     expense = service.get_owned_expense(db, user.id, expense_id)
     if expense is None:
         raise HTTPException(status_code=404, detail="Expense not found")
+    _check_category(db, user, data.category_id)
     for field, value in data.model_dump(exclude_unset=True).items():
         setattr(expense, field, value)
     db.commit()
