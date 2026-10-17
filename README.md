@@ -1,7 +1,7 @@
 # Expense Tracker
 
 Full-stack expense tracking app with authentication, category management, and spending analytics.
-
+![Dashboard](docs/dashboard.png)
 
 
 ## Features
